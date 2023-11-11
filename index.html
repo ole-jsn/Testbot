@@ -1,0 +1,200 @@
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Prime Chat</title>
+  <link rel="icon" type="image/png" href="robot-face-icon.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" href="style.css" />
+</head>
+<style>
+  .split {
+    height: 100%;
+    display: flex;
+  }
+
+  .left {
+    width: 0%;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .left-logged-in {
+    width: 20%;
+  }
+
+  .right {
+    width: 100%;
+    overflow: hidden;
+  }
+
+  .right-logged-in {
+    width: 80%;
+  }
+
+  .centered {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+  }
+
+  .sheet-container {
+    width: 100%;
+    height: 100%;
+    border: none;
+  }
+
+  .chat-container {
+    display: flex;
+    flex-direction: column;
+    height: 20%;
+    padding: 20px;
+  }
+
+  .chat-messages {
+    flex-grow: 1;
+    height: 80%;
+    overflow-y: auto;
+  }
+
+  .input-container {
+    display: flex;
+    margin-top: 20px;
+  }
+
+  .input-field {
+    flex-grow: 1;
+    margin-right: 10px;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    width: 70%;
+  }
+
+  .submit-button {
+    padding: 10px 20px;
+    background-color: red;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    width: 30%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+</style>
+<body>
+  <div class="split">
+    <div id="left-container" class="left">
+      <div class="centered">
+        <iframe src="https://script.google.com/macros/s/AKfycbw7L93wjtYSbegmcLbB7zeWg9RT8KxMJksUqW9ZdzlnYweuOVsoElR0aF1U4gtNhjXM7w/exec" class="sheet-container"></iframe>
+      </div>
+      <div class="chat-container">
+        <div class="chat-messages">
+          <!-- Hier werden die Chatnachrichten angezeigt -->
+        </div>
+        <div class="input-container">
+          <input type="text" id="message-input" class="input-field" placeholder="Zeile eingeben..." />
+          <button id="submit-button" class="submit-button">Löschen</button>
+        </div>
+      </div>
+    </div>
+    <div id="right-container" class="right">
+      <div class="">
+        <noscript>You need to enable JavaScript to run this app.</noscript>
+        <div id="app">
+          <script type="module" src="/src/index.tsx"></script>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script>
+    // Webhook URL
+    const webhookUrl = 'https://hook.eu2.make.com/bs84cv51ley6zssrmkxitwi3mmoo4nhy';
+    const websocketUrl = 'ws://localhost:8080'; // Ersetze 'localhost' mit der IP oder Domain deines Servers
+
+    // DOM-Elemente
+    const messageInput = document.getElementById('message-input');
+    const submitButton = document.getElementById('submit-button');
+    const chatMessages = document.querySelector('.chat-messages');
+
+    // Funktion zum Senden einer Nachricht
+    const sendMessage = () => {
+      const message = messageInput.value.trim();
+      if (message !== '') {
+        const payload = { message: message };
+
+        // Senden des Payloads an den Webhook
+        fetch(webhookUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(payload)
+        })
+          .then(response => {
+            if (response.ok) {
+              console.log('Die Nachricht wurde erfolgreich gesendet.');
+
+              // Senden der Nachricht über den WebSocket
+              const websocket = new WebSocket(websocketUrl);
+              websocket.onopen = () => {
+                websocket.send(message);
+                websocket.close();
+              };
+            } else {
+              console.error('Fehler beim Senden der Nachricht:', response.status);
+            }
+          })
+          .catch(error => {
+            console.error('Fehler beim Senden der Nachricht:', error);
+          });
+
+        // Zurücksetzen des Eingabefelds
+        messageInput.value = '';
+      }
+    };
+
+    // Event Listener für den Senden-Button
+    submitButton.addEventListener('click', sendMessage);
+
+    // Event Listener für die Eingabetaste im Eingabefeld
+    messageInput.addEventListener('keydown', event => {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        sendMessage();
+      }
+    });
+
+    function login() {
+      // Perform login logic here
+
+      // Update the CSS classes based on the login status
+      document.getElementById('left-container').classList.add('left-logged-in');
+      document.getElementById('right-container').classList.add('right-logged-in');
+    }
+
+    // Call the login function after a successful login
+    login();
+
+    const ws = new WebSocket('ws://localhost:5173');
+
+ws.addEventListener('open', () => {
+  console.log('WebSocket-Verbindung hergestellt.');
+});
+
+ws.addEventListener('message', (event) => {
+  console.log('Neue Nachricht empfangen: ', event.data);
+});
+
+ws.addEventListener('close', () => {
+  console.log('WebSocket-Verbindung geschlossen.');
+});
+
+  </script>
+</body>
+</html>
